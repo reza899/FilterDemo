@@ -13,7 +13,7 @@ using FilterDemo.Filters;
 
 namespace FilterDemo.Controllers
 {
-    [BindProperties]
+    
     public class HomeController : Controller
     {
         private readonly MovieDbContext context;
@@ -28,6 +28,14 @@ namespace FilterDemo.Controllers
         {
             var movies = context.Movies.AsEnumerable();
             return View(movies);
+        }
+        [TypeFilter(typeof(ResultFilterAttribute))]
+        public IActionResult Detail(int id)
+        {
+            var movie = context.Movies.Where(c => c.Id == id).FirstOrDefault();
+            if (movie.MovieImage != null)
+                ViewData["img"] = "data:image/jpeg;base64," + Convert.ToBase64String(movie.MovieImage);
+            return View(movie);
         }
 
         public IActionResult Edit(int id)
