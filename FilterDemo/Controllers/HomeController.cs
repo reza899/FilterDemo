@@ -9,6 +9,8 @@ using FilterDemo.Data;
 using Microsoft.AspNetCore.Http;
 using System.IO;
 
+using FilterDemo.Filters;
+
 namespace FilterDemo.Controllers
 {
     [BindProperties]
@@ -21,6 +23,7 @@ namespace FilterDemo.Controllers
         {
             this.context = context;
         }
+        [NoEdge]
         public IActionResult Index()
         {
             var movies = context.Movies.AsEnumerable();
@@ -36,17 +39,21 @@ namespace FilterDemo.Controllers
         }
 
         [HttpPost]
-        public IActionResult Edit(Movie movie)
+        public IActionResult Edit([FromForm]Movie movie)
         {
             context.Entry(movie).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
-
-            if (movie.MovieImage == null)
+            var thisMovie = context.Movies.FirstOrDefault(c => c.Id == movie.Id);
+            
+            if (thisMovie.MovieImage == null)
             {
-                using (var stream = new MemoryStream())
+                if (movie.MovieImage == null)
                 {
-                    MovieImage.CopyTo(stream);
-                    stream.Position = 0;
-                    movie.MovieImage = stream.ToArray();
+                    using (var stream = new MemoryStream())
+                    {
+                        MovieImage.CopyTo(stream);
+                        stream.Position = 0;
+                        movie.MovieImage = stream.ToArray();
+                    }
                 }
             }
            
@@ -60,22 +67,31 @@ namespace FilterDemo.Controllers
         }
 
         [HttpPost]
+        [ValidationModel]
         public IActionResult Create([FromForm] Movie movie)
         {
-            context.Entry(movie).State = Microsoft.EntityFrameworkCore.EntityState.Added;
-            using (var stream = new MemoryStream())
-            {
-                MovieImage.CopyTo(stream);
-                stream.Position = 0;
-                movie.MovieImage = stream.ToArray();
-            }
-            context.SaveChanges();
-            return RedirectToAction(nameof(Index));
+            
+                context.Entry(movie).State = Microsoft.EntityFrameworkCore.EntityState.Added;
+                using (var stream = new MemoryStream())
+                {
+                    MovieImage.CopyTo(stream);
+                    stream.Position = 0;
+                    movie.MovieImage = stream.ToArray();
+                }
+                context.SaveChanges();
+                return RedirectToAction(nameof(Index));
+            
         }
-        [HttpPost]
+
         public IActionResult Delete(int id)
         {
             var movie = context.Movies.FirstOrDefault(m => m.Id == id);
+            return View(movie);
+        }
+
+        [HttpPost]
+        public IActionResult Delete(Movie movie)
+        {
             context.Movies.Remove(movie);
             context.SaveChanges();
             return RedirectToAction(nameof(Index));
