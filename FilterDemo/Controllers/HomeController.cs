@@ -23,12 +23,22 @@ namespace FilterDemo.Controllers
         {
             this.context = context;
         }
+
+        public IActionResult Error()
+        {
+            return View();
+        }
+
+
         [NoEdge]
+        [ShowError()]
         public IActionResult Index()
         {
+            throw new Exception("SOMETHING HAPPEN ON EXECUTION!");
             var movies = context.Movies.AsEnumerable();
             return View(movies);
         }
+
         [TypeFilter(typeof(ResultFilterAttribute))]
         public IActionResult Detail(int id)
         {
@@ -110,10 +120,10 @@ namespace FilterDemo.Controllers
             return View();
         }
 
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
+        //[ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        //public IActionResult Error()
+        //{
+        //    return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        //}
     }
 }
